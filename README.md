@@ -37,4 +37,6 @@ yarn install          # or npm install
 # Start the development server
 npx expo start        # if using Expo
 
+```
+
 Made with ❤️ by @ddenizerr
