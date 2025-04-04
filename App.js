@@ -1,5 +1,8 @@
 import React, {useState, useEffect} from 'react';
 import {
+  Alert,
+  LayoutAnimation,
+  UIManager,
   View,
   Text,
   TextInput,
@@ -20,6 +23,11 @@ export default function App() {
   const [task, setTask] = useState();
 
   const [taskItems, setTaskItems] = useState([]);
+
+  if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
+    UIManager.setLayoutAnimationEnabledExperimental(true);
+  }
+  
 
   useEffect(() => {
     const loadTasks = async () => {
@@ -51,6 +59,9 @@ export default function App() {
     setTaskItems(updatedTasks);
     saveTasks(updatedTasks);
     setTask(null);
+
+    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+
   }
 
   const completeTask = (index) => {
@@ -62,6 +73,9 @@ export default function App() {
 
     setTaskItems(itemsCopy);
     saveTasks(itemsCopy);
+
+    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+
 
   }
   
@@ -75,6 +89,28 @@ export default function App() {
     }
   }
 
+  const clearTasks = async () => {
+
+    try{
+      
+      LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+      //Remove from the storage! 🗑️
+      await AsyncStorage.removeItem('@taskItems');
+      
+      // 💡 Clearng the state too!
+      setTaskItems([]);
+      
+      console.log('Removed all tasks!');
+
+    }catch(e){
+      console.error("Clear all tasks error: " + e);
+    }
+
+    
+
+
+  }
+
   return (
     <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
       <View style={styles.container}>
@@ -86,6 +122,14 @@ export default function App() {
             Today's Tasks
           </Text>
 
+        { taskItems.length > 0 && (
+           <TouchableOpacity onPress={() => clearTasks()} style={styles.clearAllWrapper}>
+           <Text> Clear all </Text> 
+        </TouchableOpacity>)
+
+        }
+         
+
           <View style={styles.items}>
             {/* this is where the tasks will go! */}
 
@@ -93,7 +137,7 @@ export default function App() {
               taskItems.map((item, index) => {
                 return (
                 <TouchableOpacity key={index} onPress={() => completeTask(index)}>
-                  <Task text={item} />
+                  <Task style={styles.clearAllText} text={item} />
                 </TouchableOpacity>)
               })
             }
@@ -192,6 +236,22 @@ const styles = StyleSheet.create({
 
     color: '#7AB583',
 
+  },
+  clearAllWrapper:{
+    paddingVertical: 8,
+    paddingHorizontal:16,
+    borderWidth:1,
+    borderColor:'#7AB583',
+    borderRadius: 25,
+    alignSelf: 'flex-end',
+    marginTop: 10,
+
+  },
+
+  clearAllText:{
+    color:'#7AB583',
+    fontWeight: '500',
+    fontSize: 14,
   }
 
 
