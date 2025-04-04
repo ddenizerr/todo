@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React, {useState, useEffect} from 'react';
 import {
   View,
   Text,
@@ -6,11 +6,12 @@ import {
   KeyboardAvoidingView,
   Platform,
   StyleSheet,
-  StatusBar,
   TouchableOpacity,
   TouchableWithoutFeedback,
   Keyboard
 } from 'react-native';
+
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import Task from './components/Task';
 
@@ -20,12 +21,36 @@ export default function App() {
 
   const [taskItems, setTaskItems] = useState([]);
 
+  useEffect(() => {
+    const loadTasks = async () => {
+      try {
+        const storedTasks = await AsyncStorage.getItem('@taskItems');
+
+        console.log('Loaded from storage:', storedTasks);
+
+        if (storedTasks) {
+          setTaskItems(JSON.parse(storedTasks));
+        }
+      } catch (e) {
+        console.error('Loading error:', e);
+      }
+    };
+  
+    loadTasks();
+    //second argument with empty array => run this code only once, right after the component mounts.
+  }, []);
+
   const handleAddTask = () => {
+    if(!task?.trim()) return;
+
     //when clicked to input field, keyboard will come up
     Keyboard.dismiss();
-      
-      setTaskItems([...taskItems, task]);
-      setTask(null);
+    
+    const updatedTasks = [...taskItems, task];
+
+    setTaskItems(updatedTasks);
+    saveTasks(updatedTasks);
+    setTask(null);
   }
 
   const completeTask = (index) => {
@@ -34,8 +59,20 @@ export default function App() {
     
     //remove one item in the array and store in this copy array
     itemsCopy.splice(index,1);
-    setTaskItems(itemsCopy);
 
+    setTaskItems(itemsCopy);
+    saveTasks(itemsCopy);
+
+  }
+  
+  const saveTasks = async (tasks) => { 
+
+    try{ 
+      await AsyncStorage.setItem('@taskItems', JSON.stringify(tasks));
+      console.log('Saved to storage:', tasks); // ✅ Debug log
+    }catch(e){
+      console.error('Saving error:', e);
+    }
   }
 
   return (
