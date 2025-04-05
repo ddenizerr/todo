@@ -1,6 +1,7 @@
-import React, {useState, useEffect} from 'react';
+import React, {useState, useEffect, useRef} from 'react';
 import {
   Alert,
+  Animated,
   LayoutAnimation,
   UIManager,
   View,
@@ -17,6 +18,7 @@ import {
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import Task from './components/Task';
+import LottieView from 'lottie-react-native';
 
 export default function App() {
 
@@ -24,9 +26,39 @@ export default function App() {
 
   const [taskItems, setTaskItems] = useState([]);
 
+  const [showEmptyText, setShowEmptyText] = useState(false);
+
+
+  const fadeAnim = useRef( new Animated.Value(0)).current;
+
   if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
     UIManager.setLayoutAnimationEnabledExperimental(true);
   }
+  
+  useEffect(() => {
+    if (taskItems.length === 0) {
+      // Reset in case it's not the first time
+      setShowEmptyText(false);
+      fadeAnim.setValue(0); 
+
+      const timer = setTimeout(() => {
+       
+      setShowEmptyText(true);
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: 600,         // duration of fade-in
+        delay: 500,            // delay before it starts
+        useNativeDriver: true,
+      }).start();
+
+      }, 300); //timeout to wait for rerender
+
+      return () => clearTimeout(timer);
+    } else{
+      fadeAnim.setValue(0);
+      setShowEmptyText(false);
+    }
+  }, [taskItems.length]);
   
 
   useEffect(() => {
@@ -82,9 +114,12 @@ export default function App() {
   const saveTasks = async (tasks) => { 
 
     try{ 
+      
       await AsyncStorage.setItem('@taskItems', JSON.stringify(tasks));
       console.log('Saved to storage:', tasks); // ✅ Debug log
+    
     }catch(e){
+      
       console.error('Saving error:', e);
     }
   }
@@ -115,35 +150,63 @@ export default function App() {
     <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
       <View style={styles.container}>
 
-        {/* Todays Tasks */}
+        
 
+        {/* Main Body Wrapper */}
         <View style={styles.taskWrapper}>
+          
+          {/* Todays Tasks Header */}
           <Text style={styles.sectionTitle}>
             Today's Tasks
           </Text>
 
-        { taskItems.length > 0 && (
-           <TouchableOpacity onPress={() => clearTasks()} style={styles.clearAllWrapper}>
-           <Text> Clear all </Text> 
-        </TouchableOpacity>)
+          {/* Todays Tasks Header ENDS */}
 
-        }
          
 
+    
+         
+
+          {/* Displaying Tasks */}
           <View style={styles.items}>
-            {/* this is where the tasks will go! */}
-
-            {
-              taskItems.map((item, index) => {
-                return (
+            {taskItems.length > 0 ? (
+              taskItems.map((item, index) => (
                 <TouchableOpacity key={index} onPress={() => completeTask(index)}>
-                  <Task style={styles.clearAllText} text={item} />
-                </TouchableOpacity>)
-              })
-            }
+                  <Task text={item} />
+                </TouchableOpacity>
+              ))
+            ) : (
+              <View style={styles.emptyContainer}>
+                
+                <LottieView
+                  source={require('./assets/animations/empty_list_cat.json')}
+                  autoPlay
+                  loop
+                  speed={0.5}
+                  style={styles.catAnimation}
+                />
+                <View>
 
+                  {showEmptyText && (
+                    <Animated.Text style={[styles.emptyText, {opacity: fadeAnim}]}> 
+                     Nothing here yet... 🐾
+                    </Animated.Text>
+                    
+                  )}
+                  
+                  {showEmptyText && (
+                    <Animated.Text style={[styles.subtleHint, {opacity:fadeAnim}]}>
+                    Tap the + below to create your first task 📝
+                   </Animated.Text>
+                  )}
+
+                </View>
+              </View>
+            )}
           </View>
         </View>
+
+        {/* Displaying Tasks End */}
 
           {/* Create a new todo list */}
 
@@ -151,15 +214,18 @@ export default function App() {
           behavior={Platform.OS === "ios" ? "padding" : "height"}
           style={styles.writeTaskWrapper}>
             
-            <TextInput style={styles.input} placeholder={'Create a new todo'} value={task} onChangeText={ text => setTask(text)}/>
-            
-            <TouchableOpacity onPress={ () => handleAddTask()}>
-              <View style={styles.addWrapper}>
-                <Text style={styles.addText}>+</Text>
-              </View>
-            </TouchableOpacity>
+          <TextInput style={styles.input} placeholder={'Create a new todo'} value={task} onChangeText={ text => setTask(text)}/>
           
-          </KeyboardAvoidingView>
+          <TouchableOpacity onPress={ () => handleAddTask()}>
+            <View style={styles.addWrapper}>
+              <Text style={styles.addText}>+</Text>
+            </View>
+          </TouchableOpacity>
+          
+        </KeyboardAvoidingView>
+
+          {/* Create a new todo list END */}    
+
       </View>
     </TouchableWithoutFeedback>
   );
@@ -183,7 +249,8 @@ const styles = StyleSheet.create({
   sectionTitle: {
 
     fontSize: 24,
-    fontWeight: 'bold'
+    fontWeight: 'bold',
+    color: '#fff'
 
   },
 
@@ -252,7 +319,34 @@ const styles = StyleSheet.create({
     color:'#7AB583',
     fontWeight: '500',
     fontSize: 14,
-  }
+  },
+  emptyContainer:{
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexGrow: 1, // let it expand
+    marginTop: 40,// push it up a bit above input
+  },
 
+  catAnimation:{
+    width:250,
+    height:250,
+  },
+
+  emptyText: {
+    marginTop: 10,
+    fontSize: 16,
+    fontStyle: 'italic',
+    color: '#ffffff',
+    opacity: 0.8,
+  },
+  
+  subtleHint: {
+    fontSize: 12,
+    color: '#fff',
+    opacity: 0.8,
+    marginTop: 4
+  }
+  
+  
 
 });
