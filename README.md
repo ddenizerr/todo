@@ -50,6 +50,7 @@ npx expo start        # if using Expo
 
 ### 📂 Project Structure
 
+```
 .
 ├── App.js
 ├── assets/
@@ -65,6 +66,7 @@ npx expo start        # if using Expo
 │   └── CleanAllButton.js
 └── utils/
     └── storage.js       # AsyncStorage helper functions
+```
 
 ### 🙌 Credits
 
