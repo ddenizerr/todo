@@ -70,5 +70,7 @@ npx expo start        # if using Expo
 
 ### 🙌 Credits
 
+```
 Cat animation from LottieFiles
 Made with ❤️ by @ddenizerr
+```
