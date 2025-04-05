@@ -18,6 +18,19 @@ import InputBar from './components/InputBar';
 import ClearAllButton from './components/CleanAllButton';
 import EmptyState from './components/EmptyState';
 import Task from './components/Task';
+import { LogBox } from 'react-native';
+
+if (__DEV__ === false) {
+  // This hides all yellow box warnings and red screens in production
+  LogBox.ignoreAllLogs(true);
+
+  // Optionally override console methods:
+  console.log = () => {};
+  console.warn = () => {};
+  console.error = () => {};
+}
+
+console.log('DEV MODE?', __DEV__);
 
 export default function App() {
 
